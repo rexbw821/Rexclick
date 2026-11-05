@@ -1,876 +1,982 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>RexClick — Type. Click. Simulate.</title>
-<meta name="description" content="RexClick transforms every keystroke into a satisfying mechanical keyboard sound. 34 unique switch profiles from Cherry MX to anime sounds."/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RexClick: mechanical keyboard sounds for any keyboard</title>
+<meta name="description" content="RexClick plays a real mechanical switch sound every time you press a key, in any app on your PC. 34 sound packs, free for Windows.">
+<meta property="og:title" content="RexClick">
+<meta property="og:description" content="Mechanical keyboard sounds for any keyboard. Free for Windows.">
+<meta property="og:image" content="img/app-light.png">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="apple-touch-icon" href="img/icon-256.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<script>
+  // Set the theme before first paint: saved choice, else the system setting.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('rexclick-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-/* ── TOKENS ─────────────────────────────────────────── */
-:root {
-  --bg:        #0a0a0e;
-  --surface:   #111118;
-  --surface2:  #17171f;
-  --border:    rgba(255,255,255,0.07);
-  --border-h:  rgba(255,255,255,0.14);
-  --text:      #f0f0f8;
-  --muted:     #6a6a82;
-  --accent:    #ff6b35;
-  --accent2:   #ff9a5c;
-  --purple:    #7b4ff0;
-  --glow:      rgba(255,107,53,0.25);
-  --glow2:     rgba(123,79,240,0.2);
-  --radius:    16px;
-  --radius-lg: 24px;
+/* ═════════════════════════════════════════════════════════════════════
+   TOKENS — the same palette as the app
+═════════════════════════════════════════════════════════════════════ */
+:root, [data-theme="light"] {
+  --ground: #DCDFE3;
+  --ground-2: #E6E8EB;
+  --plate: #C9CDD3;
+  --plate-hi: rgba(255,255,255,0.6);
+  --ink: #1C1F24;
+  --ink-2: #525965;
+  --line: #C4C9D0;
+  --field: #EEF0F2;
+  --tile: #E8EAED;
+
+  --alpha: #F7F7F6;  --alpha-skirt: #B9BEC6;  --alpha-ink: #4A505A;
+  --mod: #9AA1AB;    --mod-skirt: #78808B;    --mod-ink: #F4F5F7;
+  --accent: #2C4BD6; --accent-skirt: #1D339A; --accent-ink: #FFFFFF;
+  --accent-text: #2C4BD6;
+  --housing: #FFFFFF; --housing-line: #B9BEC6; --stem-line: rgba(28,31,36,0.35);
+  --shot-shadow: 0 30px 60px -20px rgba(30,40,60,0.35), 0 0 0 1px rgba(30,40,60,0.08);
+  color-scheme: light;
 }
-[data-theme="light"] {
-  --bg:       #f5f4f0;
-  --surface:  #ffffff;
-  --surface2: #f0efe9;
-  --border:   rgba(0,0,0,0.08);
-  --border-h: rgba(0,0,0,0.15);
-  --text:     #0a0a0e;
-  --muted:    #7a7a8a;
-  --glow:     rgba(255,107,53,0.15);
-  --glow2:    rgba(123,79,240,0.12);
+[data-theme="dark"] {
+  --ground: #1D2025;
+  --ground-2: #181B1F;
+  --plate: #16181C;
+  --plate-hi: rgba(255,255,255,0.04);
+  --ink: #E9ECEF;
+  --ink-2: #9BA3AE;
+  --line: #30353C;
+  --field: #25292F;
+  --tile: #25292F;
+
+  --alpha: #3A3F47;  --alpha-skirt: #24282D;  --alpha-ink: #C9CED5;
+  --mod: #2C3036;    --mod-skirt: #1B1E22;    --mod-ink: #8E96A1;
+  --accent: #7D93FF; --accent-skirt: #4F63C9; --accent-ink: #0E1430;
+  --accent-text: #9EAEFF;
+  --housing: #2F343B; --housing-line: #454B54; --stem-line: rgba(255,255,255,0.45);
+  --shot-shadow: 0 30px 60px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  color-scheme: dark;
 }
 
-/* ── RESET ──────────────────────────────────────────── */
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{
-  font-family:'DM Sans',sans-serif;
-  background:var(--bg);color:var(--text);
-  overflow-x:hidden;
-  transition:background 0.3s,color 0.3s;
+/* ═════════════════════════════════════════════════════════════════════
+   BASE
+═════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: 'Archivo', system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
-a{text-decoration:none;color:inherit;}
-img{max-width:100%;}
+a { color: var(--accent-text); }
+img { max-width: 100%; height: auto; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { margin: 0; line-height: 1.05; font-stretch: 125%; letter-spacing: -0.02em; }
+p { margin: 0; }
 
-/* ── NOISE OVERLAY ──────────────────────────────────── */
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  opacity:0.5;
-}
+.wrap { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
 
-/* ── NAV ────────────────────────────────────────────── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 40px;
-  background:rgba(10,10,14,0.7);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  transition:background 0.3s;
-}
-[data-theme="light"] nav{background:rgba(245,244,240,0.8);}
-.nav-logo{display:flex;align-items:center;gap:10px;}
-.nav-logo img{width:32px;height:32px;border-radius:8px;object-fit:cover;}
-.nav-logo-fallback{
-  width:32px;height:32px;border-radius:8px;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  display:flex;align-items:center;justify-content:center;font-size:16px;
-}
-.nav-brand{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;}
-.nav-brand span{color:var(--accent);}
-.nav-right{display:flex;align-items:center;gap:16px;}
-.theme-btn{
-  width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
-  background:var(--surface);cursor:pointer;font-size:16px;
-  display:flex;align-items:center;justify-content:center;
-  transition:all 0.2s;color:var(--text);
-}
-.theme-btn:hover{border-color:var(--accent);background:var(--surface2);}
-.nav-dl{
-  padding:8px 20px;border-radius:40px;font-size:13px;font-weight:600;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  color:#fff;cursor:pointer;border:none;
-  box-shadow:0 4px 20px var(--glow);
-  transition:all 0.2s;
-}
-.nav-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--glow);}
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 16px; top: 16px; z-index: 10; background: var(--field); padding: 8px 12px; border-radius: 8px; }
 
-/* ── HERO ───────────────────────────────────────────── */
-.hero{
-  min-height:100vh;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:120px 24px 80px;
-  position:relative;overflow:hidden;
+/* ═════════════════════════════════════════════════════════════════════
+   BUTTONS — the main button is a keycap
+═════════════════════════════════════════════════════════════════════ */
+.cap-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 52px;
+  padding: 0 22px 4px;
+  border: 0; border-radius: 12px;
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: inset 0 -5px 0 var(--accent-skirt);
+  font-size: 16px; font-weight: 700; text-decoration: none;
+  transition: transform 70ms ease-out, box-shadow 70ms ease-out;
 }
-.hero-orb{
-  position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;
-  animation:drift 10s ease-in-out infinite alternate;
-}
-.orb-a{width:600px;height:600px;background:#ff6b35;top:-200px;right:-150px;opacity:0.08;}
-.orb-b{width:500px;height:500px;background:#7b4ff0;bottom:-150px;left:-100px;opacity:0.1;animation-delay:-4s;}
-.orb-c{width:300px;height:300px;background:#ff9a5c;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.05;animation-delay:-7s;}
-@keyframes drift{
-  from{transform:translate(0,0) scale(1);}
-  to{transform:translate(30px,40px) scale(1.1);}
-}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:6px 16px;border-radius:40px;
-  background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.25);
-  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
-  color:var(--accent);text-transform:uppercase;letter-spacing:2px;
-  margin-bottom:24px;
-  animation:fadeUp 0.6s ease both;
-}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 2s ease-in-out infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.cap-btn:hover { filter: brightness(1.06); }
+.cap-btn:active { transform: translateY(3px); box-shadow: inset 0 -2px 0 var(--accent-skirt); }
+.cap-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.cap-btn.small { min-height: 40px; padding: 0 16px 3px; font-size: 14px; border-radius: 10px; box-shadow: inset 0 -4px 0 var(--accent-skirt); }
 
-.hero-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(72px,12vw,140px);
-  line-height:0.92;letter-spacing:2px;
-  margin-bottom:8px;
-  animation:fadeUp 0.6s ease 0.1s both;
-}
-.hero-title .line2{
-  -webkit-text-stroke:1px var(--accent);
-  color:transparent;
-  display:block;
-}
-[data-theme="light"] .hero-title .line2{-webkit-text-stroke:2px var(--accent);}
+.text-link { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 
-.hero-sub{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(18px,4vw,32px);
-  letter-spacing:8px;color:var(--muted);
-  margin-bottom:32px;
-  animation:fadeUp 0.6s ease 0.2s both;
+.icon-btn {
+  width: 40px; height: 40px;
+  border: 0; border-radius: 10px;
+  background: transparent; color: var(--ink-2);
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.hero-desc{
-  font-size:clamp(15px,2vw,18px);color:var(--muted);
-  max-width:540px;line-height:1.65;margin:0 auto 48px;
-  animation:fadeUp 0.6s ease 0.3s both;
-}
-.hero-desc strong{color:var(--text);}
+.icon-btn:hover { background: var(--tile); color: var(--ink); }
+.icon-btn svg { width: 18px; height: 18px; }
 
-.hero-cta{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;
-  animation:fadeUp 0.6s ease 0.4s both;
+/* ═════════════════════════════════════════════════════════════════════
+   NAV
+═════════════════════════════════════════════════════════════════════ */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--ground) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s ease, height .2s ease;
 }
-.btn-primary{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:16px 36px;border-radius:50px;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  color:#fff;font-size:16px;font-weight:700;
-  border:none;cursor:pointer;
-  box-shadow:0 8px 40px var(--glow);
-  transition:all 0.25s;
-}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 16px 50px var(--glow);}
-.btn-primary:active{transform:translateY(0);}
-.btn-primary svg{width:18px;height:18px;}
-.btn-ghost{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:15px 28px;border-radius:50px;
-  border:1px solid var(--border-h);background:transparent;
-  color:var(--text);font-size:15px;font-weight:500;cursor:pointer;
-  transition:all 0.2s;
-}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.topbar.scrolled { border-bottom-color: var(--line); }
+.nav { display: flex; align-items: center; justify-content: space-between; height: 76px; transition: height .2s ease; }
+.topbar.scrolled .nav { height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.brand img { width: 30px; height: 30px; }
+.brand span { font-size: 19px; font-weight: 800; font-stretch: 125%; letter-spacing: -0.01em; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
 
-.hero-meta{
-  margin-top:24px;
-  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
-  animation:fadeUp 0.6s ease 0.5s both;
-}
+/* ═════════════════════════════════════════════════════════════════════
+   HERO
+═════════════════════════════════════════════════════════════════════ */
+.hero { padding-top: 56px; padding-bottom: 72px; }
+.hero h1 { font-size: clamp(42px, 7.2vw, 92px); font-weight: 800; max-width: 13ch; }
+.hero-lede { margin-top: 24px; max-width: 54ch; font-size: clamp(17px, 1.6vw, 20px); color: var(--ink-2); }
+.hero-actions { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
+.hero-note { margin-top: 16px; font-size: 14px; color: var(--ink-2); }
 
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(24px);}
-  to{opacity:1;transform:translateY(0);}
+/* Demo keyboard */
+.demo { margin-top: 64px; }
+.demo-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px 24px; margin-bottom: 14px;
 }
+.demo-hint { font-size: 15px; font-weight: 600; }
+.demo-hint span { font-weight: 400; color: var(--ink-2); }
 
-/* ── APP MOCKUP ─────────────────────────────────────── */
-.mockup-wrap{
-  margin-top:60px;
-  position:relative;
-  animation:fadeUp 0.8s ease 0.5s both;
-}
-.mockup-glow{
-  position:absolute;inset:-40px;
-  background:radial-gradient(ellipse at center,rgba(255,107,53,0.15) 0%,transparent 70%);
-  pointer-events:none;
-}
-.mockup{
-  width:min(420px,90vw);
-  border-radius:20px;
-  background:var(--surface);
-  border:1px solid var(--border-h);
-  overflow:hidden;
-  box-shadow:0 40px 100px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.05);
-  position:relative;
-}
-.mockup-titlebar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;border-bottom:1px solid var(--border);
-  background:rgba(255,255,255,0.03);
-}
-.mockup-dots{display:flex;gap:6px;}
-.mockup-dot{width:10px;height:10px;border-radius:50%;}
-.dot-r{background:#ff5f57;}
-.dot-y{background:#febc2e;}
-.dot-g{background:#28c840;}
-.mockup-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--muted);}
-.mockup-body{padding:16px;display:flex;flex-direction:column;gap:10px;}
-.mockup-power{
-  display:flex;align-items:center;justify-content:space-between;
-  background:linear-gradient(135deg,rgba(255,107,53,0.1),rgba(123,79,240,0.07));
-  border:1px solid rgba(255,107,53,0.2);
-  border-radius:12px;padding:12px 14px;
-}
-.mockup-power-left{display:flex;align-items:center;gap:8px;}
-.mockup-ring{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:pulse-ring 2s infinite;}
-@keyframes pulse-ring{0%,100%{box-shadow:0 0 0 2px rgba(74,222,128,0.2),0 0 8px rgba(74,222,128,0.5);}50%{box-shadow:0 0 0 5px rgba(74,222,128,0.1),0 0 16px rgba(74,222,128,0.4);}}
-.mockup-power-text{font-size:12px;font-weight:600;}
-.mockup-toggle{width:36px;height:20px;background:linear-gradient(135deg,#ff6b35,#ff9a5c);border-radius:20px;position:relative;}
-.mockup-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;right:3px;}
-.mockup-switches{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.mockup-sw{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:8px;padding:8px 10px;
-}
-.mockup-sw.active-sw{border-color:#ff6b35;}
-.mockup-sw.active-sw::before{content:'';display:block;height:2px;background:#ff6b35;border-radius:2px;margin-bottom:6px;}
-.mockup-sw-name{font-size:10px;font-weight:700;margin-bottom:2px;}
-.mockup-sw-type{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-.mockup-keys{display:flex;flex-direction:column;gap:3px;margin-top:4px;}
-.mockup-row{display:flex;gap:3px;}
-.mk{height:14px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:2px;flex:1;max-width:18px;}
-.mk.space{max-width:80px;flex:4;}
-.mk.lit{background:#ff6b35;border-color:#ff6b35;box-shadow:0 0 6px rgba(255,107,53,0.5);}
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--tile); border: 1px solid var(--line); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 6px 14px; border-radius: 7px; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.seg input:checked + label { background: var(--ink); color: var(--ground); }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* ── STATS BAR ──────────────────────────────────────── */
-.stats-bar{
-  display:flex;align-items:center;justify-content:center;
-  gap:0;flex-wrap:wrap;
-  padding:40px 24px;
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  background:var(--surface);
-  position:relative;z-index:1;
+.plate {
+  padding: clamp(10px, 1.6vw, 22px);
+  border-radius: clamp(12px, 1.6vw, 22px);
+  background: var(--plate);
+  box-shadow: inset 0 1px 0 var(--plate-hi), 0 2px 4px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column; gap: clamp(2px, 0.4vw, 5px);
 }
-.stat-item{
-  display:flex;flex-direction:column;align-items:center;
-  padding:20px 40px;
-  border-right:1px solid var(--border);
+.kb-row { display: flex; gap: clamp(2px, 0.4vw, 5px); }
+.kb-row.frow { margin-bottom: clamp(4px, 0.8vw, 10px); }
+.k {
+  flex: var(--u) 1 0; min-width: 0;
+  height: clamp(22px, 4.2vw, 54px);
+  border: 0; border-radius: clamp(3px, 0.6vw, 8px);
+  padding: clamp(2px, 0.5vw, 7px) 0 0 clamp(3px, 0.6vw, 9px);
+  background: var(--alpha); color: var(--alpha-ink);
+  box-shadow: inset 0 calc(-1 * clamp(2px, 0.4vw, 5px)) 0 var(--alpha-skirt);
+  font-size: clamp(7px, 1vw, 13px); font-weight: 600; line-height: 1; text-align: left;
+  white-space: nowrap; overflow: hidden;
+  display: flex; align-items: flex-start;
+  transition: background-color 80ms, transform 80ms, box-shadow 80ms;
+  touch-action: manipulation;
 }
-.stat-item:last-child{border-right:none;}
-.stat-num{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:52px;line-height:1;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+.k.mod { background: var(--mod); color: var(--mod-ink); box-shadow: inset 0 calc(-1 * clamp(2px, 0.4vw, 5px)) 0 var(--mod-skirt); }
+.k.gap { visibility: hidden; }
+.k.lit {
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: inset 0 -1px 0 var(--accent-skirt);
+  transform: translateY(clamp(1px, 0.25vw, 3px));
+  transition: none;
 }
-.stat-label{font-size:12px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:2px;font-weight:500;}
+@media (max-width: 520px) { .k { font-size: 0; } }
 
-/* ── SECTION SHARED ─────────────────────────────────── */
-section{position:relative;z-index:1;padding:100px 24px;}
-.section-inner{max-width:1100px;margin:0 auto;}
-.section-tag{
-  display:inline-block;
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  text-transform:uppercase;letter-spacing:3px;
-  color:var(--accent);margin-bottom:16px;
-}
-.section-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(40px,6vw,72px);
-  line-height:1;margin-bottom:16px;
-}
-.section-desc{
-  font-size:16px;color:var(--muted);max-width:480px;line-height:1.65;margin-bottom:48px;
-}
+/* ═════════════════════════════════════════════════════════════════════
+   SECTIONS
+═════════════════════════════════════════════════════════════════════ */
+.section { padding: 96px 0; border-top: 1px solid var(--line); }
+@media (max-width: 600px) { .section { padding: 64px 0; } }
+.section h2 { font-size: clamp(32px, 4.4vw, 52px); font-weight: 800; max-width: 18ch; }
+.section-lede { margin-top: 16px; max-width: 56ch; color: var(--ink-2); }
 
-/* ── SOUNDS SECTION ─────────────────────────────────── */
-.sounds-section{background:var(--surface);}
-.sounds-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:12px;
+/* The app */
+.app-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; }
+@media (max-width: 880px) { .app-grid { grid-template-columns: 1fr; gap: 48px; } }
+.points { margin-top: 40px; display: grid; gap: 28px; }
+.point h3 { font-size: 19px; font-weight: 700; font-stretch: 112%; letter-spacing: -0.01em; }
+.point p { margin-top: 6px; color: var(--ink-2); max-width: 46ch; }
+.shot { justify-self: center; width: 100%; max-width: 460px; position: relative; container-type: inline-size; }
+/* Lit keys drawn over the screenshot, sized in the app's own pixels (620 px wide window). */
+.shot-keys { position: absolute; inset: 0; pointer-events: none; }
+.shot-key {
+  position: absolute;
+  border-radius: calc(5 / 620 * 100cqw);
+  padding: calc(3 / 620 * 100cqw) 0 0 calc(5 / 620 * 100cqw);
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: inset 0 -1px 0 var(--accent-skirt);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: calc(8.5 / 620 * 100cqw); font-weight: 600; line-height: 1;
+  transform: translateY(calc(2 / 620 * 100cqw));
+  opacity: 0;
 }
-.sound-card{
-  background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--radius);padding:18px 16px;
-  cursor:pointer;transition:all 0.2s;
-  position:relative;overflow:hidden;
-}
-.sound-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--card-col,var(--accent));
-  transform:scaleX(0);transform-origin:left;transition:transform 0.2s;
-}
-.sound-card:hover{border-color:var(--card-col,var(--accent));transform:translateY(-2px);}
-.sound-card:hover::before{transform:scaleX(1);}
-.sound-emoji{font-size:24px;margin-bottom:10px;display:block;}
-.sound-name{font-size:14px;font-weight:700;margin-bottom:3px;}
-.sound-type{
-  display:inline-block;font-size:8px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;
-  padding:2px 7px;border-radius:20px;
-  background:rgba(255,255,255,0.06);
-  color:var(--card-col,var(--muted));
-  border:1px solid rgba(255,255,255,0.08);
-}
+.shot-key.on { opacity: 1; }
+.shot img { width: 100%; border-radius: 14px; box-shadow: var(--shot-shadow); }
+.shot .dark-only { display: none; }
+[data-theme="dark"] .shot .dark-only { display: block; }
+[data-theme="dark"] .shot .light-only { display: none; }
 
-/* ── FEATURES ───────────────────────────────────────── */
-.features-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+/* Sound packs */
+.packs-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.chips { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  height: 36px; padding: 0 14px;
+  border-radius: 18px; border: 1px solid var(--line);
+  background: transparent; font-size: 14px; font-weight: 600;
 }
-.feature-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:32px 28px;
-  transition:all 0.2s;
+.chip:hover { background: var(--tile); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+.pack-grid { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 960px) { .pack-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pack {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 64px; padding: 10px 14px;
+  border-radius: 12px; background: var(--tile);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
-.feature-card:hover{border-color:var(--border-h);transform:translateY(-3px);}
-.feature-icon{
-  width:48px;height:48px;border-radius:12px;
-  background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(123,79,240,0.1));
-  border:1px solid rgba(255,107,53,0.2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;margin-bottom:20px;
-}
-.feature-title{font-size:18px;font-weight:700;margin-bottom:8px;}
-.feature-desc{font-size:14px;color:var(--muted);line-height:1.6;}
+.pack svg { flex-shrink: 0; }
+.pack-text { min-width: 0; }
+.pack-name { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.pack-desc { font-size: 13px; color: var(--ink-2); line-height: 1.35; }
+.packs-foot { margin-top: 24px; font-size: 15px; color: var(--ink-2); max-width: 60ch; }
 
-/* ── DOWNLOAD SECTION ───────────────────────────────── */
-.download-section{
-  background:var(--surface);
-  text-align:center;
-}
-.dl-card{
-  max-width:560px;margin:0 auto;
-  background:linear-gradient(135deg,rgba(255,107,53,0.08),rgba(123,79,240,0.06));
-  border:1px solid rgba(255,107,53,0.2);
-  border-radius:var(--radius-lg);padding:48px 40px;
-  position:relative;overflow:hidden;
-}
-.dl-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,107,53,0.6),transparent);
-}
-.dl-logo{
-  width:72px;height:72px;border-radius:18px;
-  margin:0 auto 20px;overflow:hidden;
-  box-shadow:0 8px 32px var(--glow);
-}
-.dl-logo img{width:100%;height:100%;object-fit:cover;}
-.dl-logo-fallback{
-  width:72px;height:72px;border-radius:18px;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  display:flex;align-items:center;justify-content:center;font-size:32px;
-  margin:0 auto 20px;
-  box-shadow:0 8px 32px var(--glow);
-}
-.dl-title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;margin-bottom:8px;}
-.dl-desc{font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.6;}
-.dl-btn{
-  display:inline-flex;align-items:center;gap:12px;
-  padding:18px 48px;border-radius:50px;
-  background:linear-gradient(135deg,#ff6b35,#ff9a5c);
-  color:#fff;font-size:17px;font-weight:700;
-  border:none;cursor:pointer;
-  box-shadow:0 8px 40px var(--glow);
-  transition:all 0.25s;width:100%;justify-content:center;
-  text-decoration:none;
-}
-.dl-btn:hover{transform:translateY(-3px);box-shadow:0 16px 60px var(--glow);}
-.dl-meta{
-  margin-top:16px;
-  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
-  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;
-}
-.dl-meta span{display:flex;align-items:center;gap:4px;}
-.terms-link{
-  margin-top:16px;font-size:12px;color:var(--muted);
-}
-.terms-link a{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+/* Privacy */
+.privacy-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }
+@media (max-width: 880px) { .privacy-grid { grid-template-columns: 1fr; gap: 32px; } }
+.facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.facts li { padding: 18px 0; border-bottom: 1px solid var(--line); display: flex; gap: 14px; align-items: flex-start; }
+.facts svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 3px; color: var(--accent-text); }
+.facts strong { display: block; font-weight: 700; }
+.facts span { color: var(--ink-2); }
 
-/* ── FOOTER ─────────────────────────────────────────── */
-footer{
-  padding:40px 24px;
-  border-top:1px solid var(--border);
-  text-align:center;
-  position:relative;z-index:1;
+/* Download */
+.download { padding: 96px 0 112px; border-top: 1px solid var(--line); }
+.dl-card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 32px 40px; align-items: center;
+  padding: clamp(28px, 5vw, 56px);
+  border-radius: 24px;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
-.footer-logo{
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-bottom:12px;
-}
-.footer-brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;}
-.footer-brand span{color:var(--accent);}
-.footer-copy{font-size:13px;color:var(--muted);}
-.footer-tagline{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+@media (max-width: 680px) { .dl-card { grid-template-columns: 1fr; } }
+.dl-card > img { width: clamp(88px, 12vw, 128px); height: auto; }
+.dl-card h2 { font-size: clamp(32px, 4.4vw, 52px); font-weight: 800; }
+.dl-meta { margin-top: 10px; color: var(--ink-2); }
+.dl-actions { margin-top: 28px; }
+.dl-small { margin-top: 18px; font-size: 14px; color: var(--ink-2); max-width: 62ch; }
+.dl-small + .dl-small { margin-top: 8px; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--accent-text); font: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── MODAL ──────────────────────────────────────────── */
-.modal-overlay{
-  display:none;position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
-  align-items:center;justify-content:center;padding:24px;
-}
-.modal-overlay.open{display:flex;}
-.modal{
-  background:var(--surface);border:1px solid var(--border-h);
-  border-radius:var(--radius-lg);max-width:540px;width:100%;
-  max-height:80vh;overflow-y:auto;padding:40px;
-  position:relative;
-}
-.modal h2{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:1px;margin-bottom:20px;}
-.modal-close{
-  position:absolute;top:20px;right:20px;
-  width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
-  background:var(--surface2);cursor:pointer;font-size:16px;
-  display:flex;align-items:center;justify-content:center;color:var(--muted);
-  transition:all 0.2s;
-}
-.modal-close:hover{border-color:var(--accent);color:var(--accent);}
-.modal-section{margin-bottom:24px;}
-.modal-section h3{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--accent);}
-.modal-section p,.modal-section li{font-size:13px;color:var(--muted);line-height:1.7;}
-.modal-section ul{padding-left:16px;}
-.modal-section li{margin-bottom:4px;}
-.modal-agree{
-  display:flex;align-items:center;gap:10px;margin-top:24px;
-  padding:16px;background:rgba(255,107,53,0.08);border-radius:10px;
-  border:1px solid rgba(255,107,53,0.2);
-}
-.modal-agree input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer;}
-.modal-agree label{font-size:13px;color:var(--text);cursor:pointer;}
+/* Footer */
+footer { border-top: 1px solid var(--line); }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 14px; color: var(--ink-2); }
+.foot nav { display: flex; gap: 20px; }
 
-/* ── RESPONSIVE ─────────────────────────────────────── */
-@media(max-width:768px){
-  nav{padding:14px 20px;}
-  .stat-item{padding:16px 20px;border-right:none;border-bottom:1px solid var(--border);}
-  .stat-item:last-child{border-bottom:none;}
-  .stats-bar{flex-direction:column;}
-  section{padding:64px 20px;}
-  .dl-card{padding:32px 24px;}
+/* ═════════════════════════════════════════════════════════════════════
+   DIALOGS
+═════════════════════════════════════════════════════════════════════ */
+dialog {
+  width: min(640px, calc(100% - 32px));
+  max-height: min(84vh, 760px);
+  padding: 0;
+  border: 0; border-radius: 18px;
+  background: var(--field); color: var(--ink);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
 }
-@media(max-width:480px){
-  .nav-brand{font-size:18px;}
-  .hero-title{letter-spacing:0;}
-  .sounds-grid{grid-template-columns:1fr 1fr;}
-}
+dialog::backdrop { background: rgba(10, 12, 16, 0.55); }
+.dlg { display: flex; flex-direction: column; max-height: inherit; }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 20px 12px 28px; }
+.dlg-head h2 { font-size: 26px; font-weight: 800; }
+.dlg-body { padding: 4px 28px 8px; overflow-y: auto; }
+.dlg-body h3 { margin-top: 20px; font-size: 16px; font-weight: 700; font-stretch: 100%; letter-spacing: 0; }
+.dlg-body p, .dlg-body li { margin-top: 6px; font-size: 15px; color: var(--ink-2); }
+.dlg-body ul { margin: 6px 0 0; padding-left: 20px; }
+.dlg-foot { padding: 16px 28px 24px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.agree { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.agree input { width: 18px; height: 18px; accent-color: var(--accent); }
+.cap-btn[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; }
 
-/* ── SCROLL REVEAL ──────────────────────────────────── */
-.reveal{
-  opacity:0;transform:translateY(32px);
-  transition:opacity 0.7s ease,transform 0.7s ease;
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
 }
-.reveal.visible{opacity:1;transform:translateY(0);}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">
-    <!-- Light mode logo (default) -->
-    <img id="nav-logo-img" src="logo.png" alt="RexClick logo"
-         onerror="this.style.display='none';document.getElementById('nav-logo-fallback').style.display='flex';">
-    <div id="nav-logo-fallback" class="nav-logo-fallback" style="display:none;">⌨</div>
-    <div class="nav-brand">Rex<span>Click</span></div>
-  </div>
-  <div class="nav-right">
-    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
-    <button class="nav-dl" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">
-      Download Free
-    </button>
-  </div>
-</nav>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-orb orb-a"></div>
-  <div class="hero-orb orb-b"></div>
-  <div class="hero-orb orb-c"></div>
-
-  <div class="hero-badge">
-    <span class="badge-dot"></span>
-    Free · Windows · 112 MB
-  </div>
-
-  <h1 class="hero-title">
-    Rex<br>
-    <span class="line2">Click</span>
-  </h1>
-
-  <div class="hero-sub">Type · Click · Simulate</div>
-
-  <p class="hero-desc">
-    Transform every keystroke into a <strong>satisfying mechanical sound</strong>.
-    34 unique switch profiles — from Cherry MX switches to game soundscapes and anime sounds.
-    Your keyboard, your vibe.
-  </p>
-
-  <div class="hero-cta">
-    <button class="btn-primary" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-      </svg>
-      Download Free
-    </button>
-    <button class="btn-ghost" onclick="document.getElementById('sounds').scrollIntoView({behavior:'smooth'})">
-      Explore Sounds →
-    </button>
-  </div>
-
-  <div class="hero-meta">Windows 10/11 · Free forever · No subscription</div>
-
-  <!-- App mockup -->
-  <div class="mockup-wrap">
-    <div class="mockup-glow"></div>
-    <div class="mockup">
-      <div class="mockup-titlebar">
-        <div class="mockup-dots">
-          <div class="mockup-dot dot-r"></div>
-          <div class="mockup-dot dot-y"></div>
-          <div class="mockup-dot dot-g"></div>
-        </div>
-        <div class="mockup-title">REXCLICK</div>
-        <div style="width:52px"></div>
-      </div>
-      <div class="mockup-body">
-        <div class="mockup-power">
-          <div class="mockup-power-left">
-            <div class="mockup-ring"></div>
-            <div class="mockup-power-text">Sound Engine — ACTIVE</div>
-          </div>
-          <div class="mockup-toggle"></div>
-        </div>
-        <div class="mockup-switches">
-          <div class="mockup-sw active-sw">
-            <div class="mockup-sw-name">Oreo</div>
-            <div class="mockup-sw-type">TACTILE · ● REAL</div>
-          </div>
-          <div class="mockup-sw">
-            <div class="mockup-sw-name">NK Cream</div>
-            <div class="mockup-sw-type">LINEAR · ● REAL</div>
-          </div>
-          <div class="mockup-sw">
-            <div class="mockup-sw-name">Holy Panda</div>
-            <div class="mockup-sw-type">TACTILE · ● REAL</div>
-          </div>
-          <div class="mockup-sw">
-            <div class="mockup-sw-name">Opera GX</div>
-            <div class="mockup-sw-type">GAMING · ● REAL</div>
-          </div>
-        </div>
-        <div class="mockup-keys">
-          <div class="mockup-row">
-            <div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div>
-          </div>
-          <div class="mockup-row">
-            <div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div>
-          </div>
-          <div class="mockup-row">
-            <div class="mk"></div><div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div><div class="mk lit"></div><div class="mk"></div><div class="mk"></div><div class="mk"></div>
-          </div>
-          <div class="mockup-row">
-            <div class="mk"></div><div class="mk"></div><div class="mk space lit"></div><div class="mk"></div><div class="mk"></div>
-          </div>
-        </div>
-      </div>
+<header class="topbar" id="topbar">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="RexClick home">
+      <img src="logo.svg" alt="" width="30" height="30">
+      <span>RexClick</span>
+    </a>
+    <div class="nav-right">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to dark theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+      </button>
+      <a class="cap-btn small" href="#download">Download</a>
     </div>
   </div>
-</section>
+</header>
 
-<!-- STATS -->
-<div class="stats-bar">
-  <div class="stat-item reveal">
-    <div class="stat-num">34</div>
-    <div class="stat-label">Switch Profiles</div>
-  </div>
-  <div class="stat-item reveal" style="transition-delay:0.1s">
-    <div class="stat-num">100%</div>
-    <div class="stat-label">Free Forever</div>
-  </div>
-  <div class="stat-item reveal" style="transition-delay:0.2s">
-    <div class="stat-num">0ms</div>
-    <div class="stat-label">Cloud Required</div>
-  </div>
-  <div class="stat-item reveal" style="transition-delay:0.3s">
-    <div class="stat-num">112</div>
-    <div class="stat-label">MB Download</div>
-  </div>
-</div>
+<main id="main">
 
-<!-- SOUNDS SECTION -->
-<section id="sounds" class="sounds-section">
-  <div class="section-inner">
-    <div class="reveal">
-      <div class="section-tag">// Sound Library</div>
-      <h2 class="section-title">34 Profiles.<br>Zero Boredom.</h2>
-      <p class="section-desc">From the crisp snap of Cherry MX Blues to the deep thock of Holy Pandas — and yes, even anime sounds. There's a profile for every mood.</p>
-    </div>
-    <div class="sounds-grid reveal" style="transition-delay:0.2s">
-      <div class="sound-card" style="--card-col:#e0e0f0"><span class="sound-emoji">⚪</span><div class="sound-name">Oreo</div><div class="sound-type">Tactile</div></div>
-      <div class="sound-card" style="--card-col:#f0d060"><span class="sound-emoji">🟡</span><div class="sound-name">NK Cream</div><div class="sound-type">Linear</div></div>
-      <div class="sound-card" style="--card-col:#6090f0"><span class="sound-emoji">🔵</span><div class="sound-name">Cherry Blue</div><div class="sound-type">Clicky</div></div>
-      <div class="sound-card" style="--card-col:#f06060"><span class="sound-emoji">🔴</span><div class="sound-name">Cherry Red</div><div class="sound-type">Linear</div></div>
-      <div class="sound-card" style="--card-col:#60d0a0"><span class="sound-emoji">🐼</span><div class="sound-name">Holy Panda</div><div class="sound-type">Tactile</div></div>
-      <div class="sound-card" style="--card-col:#c060f0"><span class="sound-emoji">🟣</span><div class="sound-name">Crystal Purple</div><div class="sound-type">Clicky</div></div>
-      <div class="sound-card" style="--card-col:#a060d0"><span class="sound-emoji">🟣</span><div class="sound-name">Topre Purple</div><div class="sound-type">EC</div></div>
-      <div class="sound-card" style="--card-col:#40e0d0"><span class="sound-emoji">🩵</span><div class="sound-name">Turquoise</div><div class="sound-type">Tactile</div></div>
-      <div class="sound-card" style="--card-col:#e06030"><span class="sound-emoji">🎮</span><div class="sound-name">Shadowgun</div><div class="sound-type">Gaming</div></div>
-      <div class="sound-card" style="--card-col:#e04070"><span class="sound-emoji">🎮</span><div class="sound-name">Opera GX</div><div class="sound-type">Gaming</div></div>
-      <div class="sound-card" style="--card-col:#40e060"><span class="sound-emoji">🟢</span><div class="sound-name">Razer Green</div><div class="sound-type">Clicky</div></div>
-      <div class="sound-card" style="--card-col:#60f090"><span class="sound-emoji">👾</span><div class="sound-name">8-Bit</div><div class="sound-type">Retro</div></div>
-      <div class="sound-card" style="--card-col:#60d0f0"><span class="sound-emoji">🍃</span><div class="sound-name">ACNL</div><div class="sound-type">Fun</div></div>
-      <div class="sound-card" style="--card-col:#f060a8"><span class="sound-emoji">✨</span><div class="sound-name">Ahegao</div><div class="sound-type">Anime</div></div>
-      <div class="sound-card" style="--card-col:#c8a060"><span class="sound-emoji">📜</span><div class="sound-name">Typewriter</div><div class="sound-type">Vintage</div></div>
-      <div class="sound-card" style="--card-col:#80b0f0"><span class="sound-emoji">🌌</span><div class="sound-name">Trails in Sky</div><div class="sound-type">JRPG</div></div>
-      <div class="sound-card" style="--card-col:#e84040"><span class="sound-emoji">🌶️</span><div class="sound-name">Chile</div><div class="sound-type">Custom</div></div>
-      <div class="sound-card" style="--card-col:#8060c0"><span class="sound-emoji">😱</span><div class="sound-name">Cry of Fear</div><div class="sound-type">Horror</div></div>
-    </div>
-    <p class="reveal" style="text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:24px;transition-delay:0.3s">+ 16 more profiles inside the app</p>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section id="features">
-  <div class="section-inner">
-    <div class="reveal">
-      <div class="section-tag">// Why RexClick</div>
-      <h2 class="section-title">Built for<br>Keyboard Lovers.</h2>
-      <p class="section-desc">Everything you need to make typing satisfying — nothing you don't.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card reveal">
-        <div class="feature-icon">🌍</div>
-        <div class="feature-title">Works Everywhere</div>
-        <div class="feature-desc">Global keyboard hook intercepts keypresses in any app — games, browsers, code editors, everything.</div>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.1s">
-        <div class="feature-icon">🔒</div>
-        <div class="feature-title">100% Local & Private</div>
-        <div class="feature-desc">No internet required. No data leaves your PC. RexClick runs entirely on your machine — your keystrokes stay yours.</div>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.2s">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">Ultra-Low Latency</div>
-        <div class="feature-desc">Web Audio API with buffer caching means sounds play in under 10ms. You hear it as you press it.</div>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.3s">
-        <div class="feature-icon">🎚️</div>
-        <div class="feature-title">Full Volume Control</div>
-        <div class="feature-desc">Crank it up or whisper quiet — the volume slider gives you full control over your sound experience.</div>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.4s">
-        <div class="feature-icon">⌨️</div>
-        <div class="feature-title">Live Visualizer</div>
-        <div class="feature-desc">Watch your keyboard light up in real-time as you type. Each key press is reflected with a colour-coded glow.</div>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.5s">
-        <div class="feature-icon">🎁</div>
-        <div class="feature-title">Completely Free</div>
-        <div class="feature-desc">No trials, no paywalls, no subscriptions. Download once, use forever. RexClick is free for everyone.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DOWNLOAD -->
-<section id="download" class="download-section">
-  <div class="section-inner">
-    <div class="dl-card reveal">
-      <div class="dl-logo">
-        <img id="dl-logo-img" src="logo.png" alt="RexClick"
-             onerror="this.parentElement.style.display='none';document.getElementById('dl-logo-fallback').style.display='flex';">
-      </div>
-      <div id="dl-logo-fallback" class="dl-logo-fallback" style="display:none;">⌨</div>
-      <div class="dl-title">Get RexClick</div>
-      <div class="dl-desc">
-        Free to download. Free to use. Forever.<br>
-        Make every keystroke count.
-      </div>
-      <a class="dl-btn"
-         href="https://www.dropbox.com/scl/fi/usm3ic5uwmt4ba4xgpotf/RexClick-Setup-1.0.0.exe?rlkey=vzk7gc4vdnp8n69440b8nnuhl&st=d6tpvlzq&dl=1"
-         onclick="showTerms(event)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-        </svg>
-        Download for Windows — Free
+  <!-- ═══ HERO ═══ -->
+  <section class="wrap hero" id="top">
+    <h1>Mechanical keyboard sounds, on any keyboard.</h1>
+    <p class="hero-lede">RexClick plays a real switch sound every time you press a key, in any app on your PC. Pick from 34 sound packs, from Cherry MX Blues to vintage typewriters.</p>
+    <div class="hero-actions">
+      <a class="cap-btn" href="#download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg>
+        Download for Windows
       </a>
-      <div class="dl-meta">
-        <span>📦 112 MB</span>
-        <span>🪟 Windows 10 / 11</span>
-        <span>✅ No install account needed</span>
+      <a class="text-link" href="#sounds">See all 34 sound packs</a>
+    </div>
+    <p class="hero-note">Free. Windows 10 and 11. No account needed.</p>
+
+    <div class="demo" id="demo">
+      <div class="demo-bar">
+        <p class="demo-hint">Try it here. <span>Type on your keyboard or tap the keys.</span></p>
+        <div class="seg" role="radiogroup" aria-label="Sound pack">
+          <input type="radio" name="sw" id="sw-cream" value="cream-travel"><label for="sw-cream" title="Linear">Cream Travel</label>
+          <input type="radio" name="sw" id="sw-panda" value="holy-pandas" checked><label for="sw-panda" title="Tactile">Holy Panda</label>
+          <input type="radio" name="sw" id="sw-oreo" value="eg-oreo"><label for="sw-oreo" title="Tactile">Oreo</label>
+        </div>
       </div>
-      <div class="terms-link">
-        By downloading you agree to our <a onclick="openModal('terms')">Terms & Conditions</a> and <a onclick="openModal('privacy')">Privacy Policy</a>.
+      <div class="plate" id="plate" role="group" aria-label="Demo keyboard"></div>
+    </div>
+  </section>
+
+  <!-- ═══ THE APP ═══ -->
+  <section class="section" id="app" aria-labelledby="app-title">
+    <div class="wrap app-grid">
+      <div>
+        <h2 id="app-title">A small window that stays out of your way.</h2>
+        <div class="points">
+          <div class="point">
+            <h3>Works in every app</h3>
+            <p>Games, browsers, code editors, chat. Close the window and RexClick keeps playing from the system tray.</p>
+          </div>
+          <div class="point">
+            <h3>Watch your keys light up</h3>
+            <p>The keyboard in the app shows each key as you press it, with your keystrokes, keys per minute and session time underneath.</p>
+          </div>
+          <div class="point">
+            <h3>Add your own sound packs</h3>
+            <p>Drop a Mechvibes-style pack into the sounds folder and it shows up the next time you open RexClick.</p>
+          </div>
+          <div class="point">
+            <h3>Picks up where you left off</h3>
+            <p>Your sound pack, volume and light or dark theme are remembered between launches.</p>
+          </div>
+        </div>
+      </div>
+      <div class="shot">
+        <img class="light-only" src="img/app-light.png" width="1240" height="1560" alt="The RexClick window in light mode, with the MX Blue PBT pack selected, sounds on, and keys lighting up one at a time as someone types.">
+        <img class="dark-only" src="img/app-dark.png" width="1240" height="1560" alt="The RexClick window in dark mode, with the MX Blue PBT pack selected, sounds on, and keys lighting up one at a time as someone types." loading="lazy">
+        <div class="shot-keys" id="shotKeys" aria-hidden="true"></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-logo">
-    <img id="footer-logo-img" src="logo.png" width="28" height="28" style="border-radius:7px;object-fit:cover;"
-         onerror="this.style.display='none'">
-    <div class="footer-brand">Rex<span>Click</span></div>
-  </div>
-  <div class="footer-tagline">Type · Click · Simulate</div>
-  <div class="footer-copy">© 2026 RexClick. Free forever. Built with ❤️</div>
-</footer>
+  <!-- ═══ SOUND PACKS ═══ -->
+  <section class="section" id="sounds" aria-labelledby="sounds-title">
+    <div class="wrap">
+      <div class="packs-head">
+        <div>
+          <h2 id="sounds-title">34 sound packs, built in.</h2>
+          <p class="section-lede">Real switches, recorded. Plus typewriters, game sounds and a few oddballs.</p>
+        </div>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filter sound packs"></div>
+      <div class="pack-grid" id="packGrid"></div>
+      <p class="packs-foot">The colour on each switch is its stem colour, the same way real switches are told apart.</p>
+    </div>
+  </section>
 
-<!-- TERMS MODAL -->
-<div class="modal-overlay" id="termsModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('terms')">×</button>
-    <h2>Terms & Conditions</h2>
-    <div class="modal-section">
-      <h3>1. Acceptance</h3>
-      <p>By downloading and using RexClick ("the App"), you agree to these terms. If you do not agree, do not download or use the App.</p>
-    </div>
-    <div class="modal-section">
-      <h3>2. License</h3>
-      <p>RexClick is provided free of charge for personal use. You may not sell, redistribute, or claim ownership of this software.</p>
-    </div>
-    <div class="modal-section">
-      <h3>3. No Warranty</h3>
-      <p>RexClick is provided "as is" without warranty of any kind. We are not liable for any damages resulting from its use.</p>
-    </div>
-    <div class="modal-section">
-      <h3>4. Third-Party Sounds</h3>
-      <p>Some included sound profiles are sourced from open community packs. All sounds are used for personal, non-commercial purposes only.</p>
-    </div>
-    <div class="modal-section">
-      <h3>5. Administrator Access</h3>
-      <p>The App requests administrator permissions solely to enable the global keyboard hook feature. This permission is used only to listen for keypresses and play sounds. No data is collected, transmitted, or stored.</p>
-    </div>
-    <div class="modal-section">
-      <h3>6. Updates</h3>
-      <p>These terms may be updated at any time. Continued use of the App after any changes constitutes acceptance of the new terms.</p>
-    </div>
-    <div class="modal-agree">
-      <input type="checkbox" id="termsCheck" onchange="handleAgree()">
-      <label for="termsCheck">I have read and agree to the Terms & Conditions</label>
-    </div>
-  </div>
-</div>
-
-<!-- PRIVACY MODAL -->
-<div class="modal-overlay" id="privacyModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('privacy')">×</button>
-    <h2>Privacy Policy</h2>
-    <div class="modal-section">
-      <h3>Your Privacy is 100% Protected</h3>
-      <p>RexClick is a fully <strong>local application</strong>. Here is exactly what it does and does not do:</p>
-    </div>
-    <div class="modal-section">
-      <h3>What We DON'T Collect</h3>
-      <ul>
-        <li>We do NOT collect any keystrokes or typing data</li>
-        <li>We do NOT send any data to any server</li>
-        <li>We do NOT require an internet connection</li>
-        <li>We do NOT track usage, analytics, or behaviour</li>
-        <li>We do NOT store any personal information</li>
+  <!-- ═══ PRIVACY ═══ -->
+  <section class="section" id="privacy" aria-labelledby="privacy-title">
+    <div class="wrap privacy-grid">
+      <div>
+        <h2 id="privacy-title">Your keystrokes stay on your PC.</h2>
+        <p class="section-lede">RexClick only notices which key you pressed so it can play the right sound. Then it forgets it. <button class="link-btn" type="button" data-open="privacyDlg">Read the privacy policy</button>.</p>
+      </div>
+      <ul class="facts">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <div><strong>Nothing is recorded</strong><span>No typing history, no logs. Key presses are used for sound and dropped.</span></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <div><strong>Works offline</strong><span>No internet connection, no servers, no analytics.</span></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <div><strong>No account, no admin rights</strong><span>Install it and turn the sound on. That's all.</span></div>
+        </li>
       </ul>
     </div>
-    <div class="modal-section">
-      <h3>What the App Does</h3>
-      <p>RexClick listens for keyboard events <em>locally on your device</em> solely to trigger sound playback. Keypress events are processed in memory and immediately discarded. Nothing is logged or stored.</p>
+  </section>
+
+  <!-- ═══ DOWNLOAD ═══ -->
+  <section class="download" id="download" aria-labelledby="dl-title">
+    <div class="wrap">
+      <div class="dl-card">
+        <img src="logo.svg" alt="" width="128" height="128">
+        <div>
+          <h2 id="dl-title">Download RexClick</h2>
+          <p class="dl-meta">Version 1.1.0 for Windows 10 and 11. 112 MB. Free.</p>
+          <div class="dl-actions">
+            <!-- ▼ Your installer link. Change this one href when you upload a new version. -->
+            <a class="cap-btn" id="dlBtn" href="https://www.dropbox.com/scl/fi/khgfqk5268t99mtvg4sqh/RexClick-Setup-1.1.0.exe?rlkey=pqm4k52dpr0u8lmh9taryp4f0&st=klpdc3a9&dl=1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg>
+              Download for Windows
+            </a>
+          </div>
+          <p class="dl-small">By downloading you agree to the <button class="link-btn" type="button" data-open="termsDlg">terms</button> and <button class="link-btn" type="button" data-open="privacyDlg">privacy policy</button>.</p>
+          <p class="dl-small">Windows may say it protected your PC, because the installer isn't signed yet. Click More info, then Run anyway.</p>
+        </div>
+      </div>
     </div>
-    <div class="modal-section">
-      <h3>Administrator Permission</h3>
-      <p>The app requests admin rights to register a global keyboard hook — a standard Windows API used to listen for keypress events system-wide. This is the same mechanism used by many accessibility tools and keyboard remappers. It is used exclusively for sound triggering.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="#top">
+      <img src="logo.svg" alt="" width="24" height="24" style="width:24px;height:24px">
+      <span style="font-size:16px">RexClick</span>
+    </a>
+    <nav aria-label="Legal">
+      <button class="link-btn" type="button" data-open="termsDlg">Terms</button>
+      <button class="link-btn" type="button" data-open="privacyDlg">Privacy</button>
+    </nav>
+    <span>© 2026 RexClick</span>
+  </div>
+</footer>
+
+<!-- ═══ TERMS ═══ -->
+<dialog id="termsDlg" aria-labelledby="termsTitle">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="termsTitle">Terms and conditions</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="7" y1="7" x2="17" y2="17"/><line x1="17" y1="7" x2="7" y2="17"/></svg>
+      </button>
     </div>
-    <div class="modal-section">
-      <h3>Contact</h3>
-      <p>If you have any privacy concerns, you are welcome to inspect the open source code of the project.</p>
+    <div class="dlg-body">
+      <h3>1. Acceptance</h3>
+      <p>By downloading and using RexClick ("the App"), you agree to these terms. If you do not agree, do not download or use the App.</p>
+      <h3>2. License</h3>
+      <p>RexClick is provided free of charge for personal use. You may not sell, redistribute, or claim ownership of this software.</p>
+      <h3>3. No warranty</h3>
+      <p>RexClick is provided "as is" without warranty of any kind. We are not liable for any damages resulting from its use.</p>
+      <h3>4. Third-party sounds</h3>
+      <p>Some included sound packs come from open community packs. All sounds are used for personal, non-commercial purposes only.</p>
+      <h3>5. Keyboard access</h3>
+      <p>The App listens for key presses system-wide so it can play sounds in any app. It does not need administrator rights. If you choose to run it as administrator, that only lets it hear key presses while other administrator windows are in focus. No data is collected, sent or stored.</p>
+      <h3>6. Updates</h3>
+      <p>These terms may be updated at any time. Continued use of the App after any changes means you accept the new terms.</p>
+    </div>
+    <div class="dlg-foot" id="termsFoot">
+      <label class="agree"><input type="checkbox" id="termsCheck"> I agree to the terms</label>
+      <button class="cap-btn small" type="button" id="agreeBtn" disabled>Agree and download</button>
     </div>
   </div>
-</div>
+</dialog>
+
+<!-- ═══ PRIVACY ═══ -->
+<dialog id="privacyDlg" aria-labelledby="privacyTitle">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="privacyTitle">Privacy policy</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="7" y1="7" x2="17" y2="17"/><line x1="17" y1="7" x2="7" y2="17"/></svg>
+      </button>
+    </div>
+    <div class="dlg-body" style="padding-bottom: 28px">
+      <p>RexClick is a fully local application. Here is exactly what it does and doesn't do.</p>
+      <h3>What we don't collect</h3>
+      <ul>
+        <li>We don't collect keystrokes or anything you type.</li>
+        <li>We don't send any data to any server.</li>
+        <li>We don't need an internet connection.</li>
+        <li>We don't track usage, analytics or behaviour.</li>
+        <li>We don't store any personal information.</li>
+      </ul>
+      <h3>What the app does</h3>
+      <p>RexClick listens for keyboard events on your device only to choose which sound to play. Each key press is handled in memory and discarded straight away. Nothing is logged or saved. The app saves your settings (sound pack, volume, theme) on your own computer.</p>
+      <h3>Keyboard access</h3>
+      <p>RexClick uses a global keyboard hook, a standard operating-system feature also used by accessibility tools and keyboard remappers, to hear key presses in any app. It doesn't need administrator rights. On macOS, you allow it under Accessibility in System Settings.</p>
+      <h3>This website</h3>
+      <p>This site remembers your theme choice and whether you accepted the terms, in your own browser. It loads its font from Google Fonts.</p>
+      <h3>Contact</h3>
+      <p>If you have any privacy concerns, you are welcome to inspect the source code of the project.</p>
+    </div>
+  </div>
+</dialog>
 
 <script>
-// ── LOGO SWAP HELPER ───────────────────────────────────
-function updateLogos(theme) {
-  const logoSrc  = theme === 'dark' ? 'logo1.png' : 'logo.png';
-  const navLogo    = document.getElementById('nav-logo-img');
-  const dlLogo     = document.getElementById('dl-logo-img');
-  const footerLogo = document.getElementById('footer-logo-img');
-  if (navLogo)    navLogo.src    = logoSrc;
-  if (dlLogo)     dlLogo.src     = logoSrc;
-  if (footerLogo) footerLogo.src = logoSrc;
+'use strict';
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ═════════════════════════════════════════════════════════════════════
+// THEME
+// ═════════════════════════════════════════════════════════════════════
+function syncThemeBtn() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  $('themeBtn').setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+}
+$('themeBtn').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  store.set('rexclick-theme', next);
+  syncThemeBtn();
+});
+syncThemeBtn();
+
+// Sticky nav: show a dividing line once the page has scrolled.
+const topbar = $('topbar');
+const onScroll = () => topbar.classList.toggle('scrolled', window.scrollY > 8);
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+// ═════════════════════════════════════════════════════════════════════
+// DEMO KEYBOARD
+// [legend, width in key units, KeyboardEvent.code, kind]  m = modifier, g = gap
+// ═════════════════════════════════════════════════════════════════════
+const LAYOUT = [
+  [['Esc',1,'Escape','m'],['',1,'','g'],['F1',1,'F1','m'],['F2',1,'F2','m'],['F3',1,'F3','m'],['F4',1,'F4','m'],['',.5,'','g'],
+   ['F5',1,'F5','m'],['F6',1,'F6','m'],['F7',1,'F7','m'],['F8',1,'F8','m'],['',.5,'','g'],
+   ['F9',1,'F9','m'],['F10',1,'F10','m'],['F11',1,'F11','m'],['F12',1,'F12','m']],
+  [['`',1,'Backquote'],['1',1,'Digit1'],['2',1,'Digit2'],['3',1,'Digit3'],['4',1,'Digit4'],['5',1,'Digit5'],['6',1,'Digit6'],['7',1,'Digit7'],['8',1,'Digit8'],['9',1,'Digit9'],['0',1,'Digit0'],['-',1,'Minus'],['=',1,'Equal'],['Backspace',2,'Backspace','m']],
+  [['Tab',1.5,'Tab','m'],...'QWERTYUIOP'.split('').map(c => [c,1,'Key'+c]),['[',1,'BracketLeft'],[']',1,'BracketRight'],['\\',1.5,'Backslash']],
+  [['Caps',1.75,'CapsLock','m'],...'ASDFGHJKL'.split('').map(c => [c,1,'Key'+c]),[';',1,'Semicolon'],["'",1,'Quote'],['Enter',2.25,'Enter','m']],
+  [['Shift',2.25,'ShiftLeft','m'],...'ZXCVBNM'.split('').map(c => [c,1,'Key'+c]),[',',1,'Comma'],['.',1,'Period'],['/',1,'Slash'],['Shift',2.75,'ShiftRight','m']],
+  [['Ctrl',1.25,'ControlLeft','m'],['Win',1.25,'MetaLeft','m'],['Alt',1.25,'AltLeft','m'],['',6.25,'Space'],['Alt',1.25,'AltRight','m'],['Fn',1.25,'','m'],['Menu',1.25,'ContextMenu','m'],['Ctrl',1.25,'ControlRight','m']],
+];
+const keyEls = new Map();
+const keyTimers = new Map();
+
+(function buildKeyboard() {
+  const plate = $('plate');
+  LAYOUT.forEach((row, r) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row' + (r === 0 ? ' frow' : '');
+    for (const [label, w, code, kind] of row) {
+      const k = document.createElement(kind === 'g' ? 'span' : 'button');
+      k.className = 'k' + (kind === 'm' ? ' mod' : '') + (kind === 'g' ? ' gap' : '');
+      k.style.setProperty('--u', w);
+      k.textContent = label;
+      if (kind !== 'g') {
+        k.type = 'button';
+        k.tabIndex = -1;
+        k.setAttribute('aria-label', label || 'Space');
+        let down = false;
+        k.addEventListener('pointerdown', (e) => { e.preventDefault(); down = true; press(code || label, true); });
+        const up = () => { if (down) { down = false; release(code || label); } };
+        k.addEventListener('pointerup', up);
+        k.addEventListener('pointerleave', up);
+      }
+      if (code) keyEls.set(code, k);
+      rowEl.appendChild(k);
+    }
+    plate.appendChild(rowEl);
+  });
+})();
+
+function light(code) {
+  const el = keyEls.get(code);
+  if (!el) return;
+  el.classList.add('lit');
+  clearTimeout(keyTimers.get(code));
+  keyTimers.set(code, setTimeout(() => el.classList.remove('lit'), 120));
 }
 
-// ── THEME ─────────────────────────────────────────────
-function toggleTheme() {
-  const html = document.documentElement;
-  const btn  = document.getElementById('themeBtn');
-  if (html.dataset.theme === 'light') {
-    html.dataset.theme = 'dark';
-    btn.textContent = '☀️';
-    updateLogos('dark');
-  } else {
-    html.dataset.theme = 'light';
-    btn.textContent = '🌙';
-    updateLogos('light');
+// ── Sound: three real RexClick sound packs, in sounds/ next to this page ──
+// KeyboardEvent.code → the keycodes the packs' config.json files use.
+const CODE_TO_KC = {
+  Escape:1, Digit1:2, Digit2:3, Digit3:4, Digit4:5, Digit5:6, Digit6:7, Digit7:8, Digit8:9, Digit9:10, Digit0:11,
+  Minus:12, Equal:13, Backspace:14, Tab:15, KeyQ:16, KeyW:17, KeyE:18, KeyR:19, KeyT:20, KeyY:21, KeyU:22, KeyI:23,
+  KeyO:24, KeyP:25, BracketLeft:26, BracketRight:27, Enter:28, ControlLeft:29, KeyA:30, KeyS:31, KeyD:32, KeyF:33,
+  KeyG:34, KeyH:35, KeyJ:36, KeyK:37, KeyL:38, Semicolon:39, Quote:40, Backquote:41, ShiftLeft:42, Backslash:43,
+  KeyZ:44, KeyX:45, KeyC:46, KeyV:47, KeyB:48, KeyN:49, KeyM:50, Comma:51, Period:52, Slash:53, ShiftRight:54,
+  AltLeft:56, Space:57, CapsLock:58, F1:59, F2:60, F3:61, F4:62, F5:63, F6:64, F7:65, F8:66, F9:67, F10:68,
+  F11:87, F12:88, ControlRight:3613, AltRight:3640, MetaLeft:3675, ContextMenu:3677,
+};
+const DEMO_PACKS = ['holy-pandas', 'cream-travel', 'eg-oreo'];
+
+let ctx = null, master = null;
+function getCtx() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC({ latencyHint: 'interactive' });
+    master = ctx.createGain();
+    master.gain.value = 0.8;
+    master.connect(ctx.destination);
+  }
+  return ctx;
+}
+function audio() {           // call from a click or key press: browsers only allow sound after one
+  const a = getCtx();
+  if (a && a.state === 'suspended') a.resume();
+  return a;
+}
+
+// "GENERIC_R{0-4}.mp3" → GENERIC_R0.mp3 … GENERIC_R4.mp3
+function expand(pattern) {
+  if (!pattern) return [];
+  const m = pattern.match(/\{(\d+)-(\d+)\}/);
+  if (!m) return [pattern];
+  const out = [];
+  for (let i = +m[1]; i <= +m[2]; i++) out.push(pattern.replace(m[0], String(i)));
+  return out;
+}
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+// The three packs are bundled in sounds/demo-sounds.js (loaded below), so they
+// work on a web server and when index.html is opened straight from disk.
+let bundleReady = null;
+function loadBundle() {
+  if (!bundleReady) {
+    bundleReady = new Promise((resolve, reject) => {
+      if (window.REXCLICK_DEMO_SOUNDS) return resolve(window.REXCLICK_DEMO_SOUNDS);
+      const tag = document.createElement('script');
+      tag.src = 'sounds/demo-sounds.js';
+      tag.onload = () => window.REXCLICK_DEMO_SOUNDS ? resolve(window.REXCLICK_DEMO_SOUNDS) : reject(new Error('sound bundle is empty'));
+      tag.onerror = () => reject(new Error('could not load sounds/demo-sounds.js'));
+      document.head.appendChild(tag);
+    });
+  }
+  return bundleReady;
+}
+
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function decode(pack, file) {
+  const b64 = pack.files[file];
+  if (!b64) return Promise.reject(new Error(`missing file ${file}`));
+  const data = base64ToArrayBuffer(b64);
+  // Older Safari only supports the callback form of decodeAudioData.
+  return new Promise((resolve, reject) => getCtx().decodeAudioData(data, resolve, reject));
+}
+
+const packs = {};      // id -> loaded pack (null if it failed)
+const loading = {};    // id -> Promise of the loaded pack
+function loadPack(id) {
+  if (!loading[id]) {
+    loading[id] = (async () => {
+      const bundle = await loadBundle();
+      const src = bundle[id];
+      if (!src) throw new Error('not in the sound bundle');
+      if (!getCtx()) throw new Error('Web Audio not supported');
+      const config = src.config;
+      const defines = config.defines || {};
+      if (config.key_define_type === 'multi') {
+        // One file per sound: random "generic" presses, separate release sounds,
+        // and special files for keys like Space, Enter and Backspace.
+        const generic = expand(config.sound);
+        const genericUp = expand(config.soundup);
+        const files = [...new Set([...generic, ...genericUp, ...Object.values(defines).filter((v) => typeof v === 'string')])];
+        const buffers = {};
+        await Promise.all(files.map(async (f) => { try { buffers[f] = await decode(src, f); } catch (e) { console.warn(`[${id}] ${f}`, e && e.message); } }));
+        return (packs[id] = { multi: true, defines, buffers, generic: generic.filter((f) => buffers[f]), genericUp: genericUp.filter((f) => buffers[f]) });
+      }
+      // One long recording, cut into a slice per key: [start ms, length ms].
+      const buffer = await decode(src, config.sound);
+      return (packs[id] = { multi: false, defines, buffer, keys: Object.keys(defines).filter((k) => !k.includes('-up') && defines[k]) });
+    })().catch((e) => { console.warn(`[${id}]`, e.message); packs[id] = null; return null; });
+  }
+  return loading[id];
+}
+
+function playBuffer(buffer, offset, duration) {
+  const a = audio(); if (!a || !buffer) return;
+  const src = a.createBufferSource(), g = a.createGain();
+  src.buffer = buffer;
+  src.playbackRate.value = 0.98 + Math.random() * 0.04;   // tiny variation so repeats don't sound robotic
+  g.gain.value = 0.9 + Math.random() * 0.1;
+  src.connect(g); g.connect(master);
+  if (duration) src.start(0, offset, duration); else src.start(0);
+}
+
+function playPack(pack, kc, isUp) {
+  const d = pack.defines;
+  if (pack.multi) {
+    const file = isUp ? (d[kc + '-up'] || (pack.genericUp.length ? pick(pack.genericUp) : null))
+                      : (d[kc] || (pack.generic.length ? pick(pack.generic) : null));
+    if (file && pack.buffers[file]) playBuffer(pack.buffers[file]);
+    return;
+  }
+  const slice = isUp ? d[kc + '-up'] : (d[kc] || d[pick(pack.keys)]);
+  if (Array.isArray(slice)) playBuffer(pack.buffer, slice[0] / 1000, Math.max(0.01, slice[1] / 1000));
+}
+
+// If a pack can't load (very old browser, or demo-sounds.js missing from the upload),
+// fall back to a simple synthesised click so the demo still makes a sound.
+function synthClick() {
+  const a = audio(); if (!a) return;
+  const now = a.currentTime, o = a.createOscillator(), g = a.createGain();
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(2400, now); o.frequency.exponentialRampToValueAtTime(600, now + 0.03);
+  g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  o.connect(g); g.connect(master); o.start(now); o.stop(now + 0.06);
+}
+
+const currentPackId = () => (document.querySelector('input[name="sw"]:checked') || {}).value || 'holy-pandas';
+
+function sound(code, isUp) {
+  const kc = CODE_TO_KC[code] || 30;
+  const p = packs[currentPackId()];
+  if (p) { playPack(p, kc, isUp); return; }
+  if (p === null) { if (!isUp) synthClick(); return; }
+  audio();                                 // still loading: start it and wait
+  loadPack(currentPackId()).then((loaded) => { if (loaded) playPack(loaded, kc, isUp); else if (!isUp) synthClick(); });
+}
+
+let demoStopped = false;
+function press(code, withSound) {
+  demoStopped = true;
+  light(code);
+  if (withSound) sound(code, false);
+}
+function release(code) { sound(code, true); }
+
+// Real keyboard: play along while the demo keyboard is on screen.
+let plateVisible = false;
+new IntersectionObserver((entries) => { plateVisible = entries[0].isIntersecting; }, { threshold: 0 }).observe($('plate'));
+
+const held = new Set();
+document.addEventListener('keydown', (e) => {
+  if (!plateVisible) return;
+  if (document.querySelector('dialog[open]')) return;
+  const t = e.target;
+  const typing = t && (t.isContentEditable || /^(TEXTAREA|SELECT)$/.test(t.tagName) ||
+    (t.tagName === 'INPUT' && !/^(radio|checkbox|range|button)$/.test(t.type)));
+  if (typing) return;                       // never get in the way of real text fields
+  if (!keyEls.has(e.code)) return;
+  if (held.has(e.code)) return;             // ignore auto-repeat
+  held.add(e.code);
+  if (e.code === 'Space' && !e.ctrlKey && !e.metaKey) e.preventDefault(); // don't scroll the page
+  press(e.code, true);
+});
+document.addEventListener('keyup', (e) => {
+  if (!held.has(e.code)) return;
+  held.delete(e.code);
+  release(e.code);
+});
+window.addEventListener('blur', () => held.clear());
+
+// Switching packs plays a quick press-and-release so you hear the difference.
+document.querySelectorAll('input[name="sw"]').forEach((r) => r.addEventListener('change', () => {
+  audio();
+  loadPack(r.value).then(() => { sound('KeyA', false); setTimeout(() => sound('KeyA', true), 95); });
+}));
+
+// Load all three packs in the background once the page is ready (about 500 KB in total).
+window.addEventListener('load', () => { if (getCtx()) DEMO_PACKS.forEach(loadPack); });
+
+// One quiet typing demo on load (lights only; browsers block sound until you interact).
+(function demo() {
+  if (reduceMotion) return;
+  const seq = 'REXCLICK'.split('').map((c) => 'Key' + c);
+  let i = 0;
+  setTimeout(function step() {
+    if (demoStopped || i >= seq.length) return;
+    light(seq[i++]);
+    setTimeout(step, 150 + Math.random() * 90);
+  }, 900);
+})();
+
+// ═════════════════════════════════════════════════════════════════════
+// APP SCREENSHOT TYPING
+// Key positions in the screenshot, in the app's pixels: [x, y, width, height]
+// of a 620 × 780 window. Keys light up one at a time as if someone is typing.
+// ═════════════════════════════════════════════════════════════════════
+const SHOT_KEYS = {"Q":[90,289,34,28],"W":[127,289,34,28],"E":[164,289,34,28],"R":[201,289,34,28],"T":[238,289,34,28],"Y":[275,289,34,28],"U":[312,289,34,28],"I":[349,289,34,28],"O":[386,289,34,28],"P":[423,289,34,28],"A":[99,320,34,28],"S":[136,320,34,28],"D":[173,320,34,28],"F":[210,320,34,28],"G":[247,320,34,28],"H":[284,320,34,28],"J":[321,320,34,28],"K":[358,320,34,28],"L":[395,320,34,28],"Z":[117,351,34,28],"X":[154,351,34,28],"C":[191,351,34,28],"V":[228,351,34,28],"B":[265,351,34,28],"N":[302,351,34,28],"M":[339,351,34,28],",":[376,351,34,28],".":[413,351,34,28]," ":[172,382,228,28]};
+const SHOT_TEXT = 'hello from rexclick. every key you press gets its own click, in any app. ';
+
+(function shotTyping() {
+  const layer = $('shotKeys');
+  if (!layer || reduceMotion) return;
+  const els = {};
+  for (const [ch, [x, y, w, h]] of Object.entries(SHOT_KEYS)) {
+    const el = document.createElement('span');
+    el.className = 'shot-key';
+    el.style.left = (x / 620 * 100) + '%';
+    el.style.top = (y / 780 * 100) + '%';
+    el.style.width = (w / 620 * 100) + '%';
+    el.style.height = (h / 780 * 100) + '%';
+    el.textContent = ch === ' ' ? '' : ch;
+    layer.appendChild(el);
+    els[ch] = el;
+  }
+
+  let i = 0, visible = false, timer = null;
+  function step() {
+    timer = null;
+    if (!visible) return;
+    const ch = SHOT_TEXT[i % SHOT_TEXT.length].toUpperCase();
+    i++;
+    const el = els[ch];
+    if (el) {
+      el.classList.add('on');
+      setTimeout(() => el.classList.remove('on'), 110);
+    }
+    // Human-ish rhythm: a little random, a longer pause after spaces and at the end.
+    const atEnd = i % SHOT_TEXT.length === 0;
+    const delay = atEnd ? 1800 : ch === ' ' ? 220 + Math.random() * 120 : ch === '.' || ch === ',' ? 380 : 120 + Math.random() * 110;
+    timer = setTimeout(step, delay);
+  }
+  new IntersectionObserver((entries) => {
+    visible = entries[0].isIntersecting;
+    if (visible && !timer) timer = setTimeout(step, 400);
+  }, { threshold: 0.2 }).observe(layer);
+})();
+
+// ═════════════════════════════════════════════════════════════════════
+// SOUND PACKS
+// ═════════════════════════════════════════════════════════════════════
+const PACKS = [
+  ['Oreo','Tactile','Smooth tactile bump','#E8E8EE'],
+  ['NK Cream','Linear','Buttery smooth linear','#F0D060'],
+  ['MX Blue PBT','Clicky','Clicky with thock','#4A80E0'],
+  ['MX Blue ABS','Clicky','Classic clicky','#5090F0'],
+  ['MX Red ABS','Linear','Light smooth linear','#E05050'],
+  ['MX Red PBT','Linear','Deeper red linear','#C03838'],
+  ['MX Black ABS','Linear','Heavy smooth linear','#3A3A44'],
+  ['MX Black PBT','Linear','Deep thocky linear','#22222A'],
+  ['MX Brown ABS','Tactile','Light tactile bump','#8A5030'],
+  ['MX Brown PBT','Tactile','Deeper tactile bump','#704020'],
+  ['Holy Panda','Tactile','Deep satisfying thock','#E8E8E8'],
+  ['Turquoise','Tactile','Crisp medium tactile','#30D0C0'],
+  ['Crystal Purple','Clicky','Light airy clicky','#C060F0'],
+  ['Box White','Clicky','Crisp clicky box','#F4F4F8'],
+  ['Razer Green','Clicky','Razer BlackWidow','#38D058'],
+  ['Topre Purple','Topre','Electro-capacitive thock','#9050D0'],
+  ['Cream Travel','Linear','Low-profile linear','#E8D898'],
+  ['MX Black Travel','Linear','Heavy low-profile','#3A3A44'],
+  ['MX Blue Travel','Clicky','Clicky low-profile','#4880E0'],
+  ['MX Brown Travel','Tactile','Tactile low-profile','#8A5030'],
+  ['Lincoln','Typewriter','Vintage typewriter','#C89850'],
+  ['Olympia','Typewriter','Classic typewriter','#D0B060'],
+  ['Typewriter Beta','Typewriter','Beta typewriter','#B08048'],
+  ['Teleprinter','Typewriter','Teleprinter machine','#B09870'],
+  ['8-Bit','Fun','Retro chiptune','#50D870'],
+  ['ACNL','Fun','Animal Crossing voices','#50C8E0'],
+  ['Ahegao','Fun','Novelty sound','#E050A0'],
+  ['Trails in the Sky','Fun','JRPG menu click','#70A8F0'],
+  ['Opera GX','Fun','Gaming browser sounds','#E03860'],
+  ['Shadowgun','Fun','Game UI sound','#E07030'],
+  ['Cry Of Fear','Fun','Horror game sounds','#8080A0'],
+  ['Chile','Custom','Custom recording','#E04040'],
+  ['Flickson Hit','Custom','Sharp impact','#E0A030'],
+  ['Demo pack','Custom','One file per key','#9898B8'],
+];
+const STEM_PATH = 'M10 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4v4a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-4H6a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h4z';
+let filter = 'All';
+
+function renderPacks() {
+  const grid = $('packGrid');
+  grid.innerHTML = '';
+  for (const [name, type, desc, color] of PACKS) {
+    if (filter !== 'All' && type !== filter) continue;
+    const el = document.createElement('div');
+    el.className = 'pack';
+    el.innerHTML = `<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="5" fill="var(--housing)" stroke="var(--housing-line)"/>
+        <path d="${STEM_PATH}" fill="${color}" stroke="var(--stem-line)" stroke-width="0.8"/></svg>
+      <div class="pack-text"><div class="pack-name"></div><div class="pack-desc"></div></div>`;
+    el.querySelector('.pack-name').textContent = name;
+    el.querySelector('.pack-desc').textContent = filter === 'All' ? `${type}. ${desc}` : desc;
+    grid.appendChild(el);
   }
 }
 
-// ── SCROLL REVEAL ──────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+(function buildChips() {
+  const wrap = $('chips');
+  const types = ['All', ...new Set(PACKS.map((p) => p[1]))];
+  for (const t of types) {
+    const n = t === 'All' ? PACKS.length : PACKS.filter((p) => p[1] === t).length;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = `${t} ${n}`;
+    b.setAttribute('aria-pressed', String(t === filter));
+    b.addEventListener('click', () => {
+      filter = t;
+      wrap.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+      renderPacks();
+    });
+    wrap.appendChild(b);
+  }
+  renderPacks();
+})();
 
-// ── MODALS ─────────────────────────────────────────────
-function openModal(type) {
-  document.getElementById(type + 'Modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+// ═════════════════════════════════════════════════════════════════════
+// DIALOGS + DOWNLOAD WITH TERMS
+// ═════════════════════════════════════════════════════════════════════
+const TERMS_KEY = 'rexclick-terms-agreed';
+const dlBtn = $('dlBtn');
+const termsDlg = $('termsDlg');
+let downloadAfterAgree = false;
+
+function openDialog(id, forDownload) {
+  const d = $(id);
+  if (id === 'termsDlg') {
+    downloadAfterAgree = !!forDownload;
+    const agreed = !!store.get(TERMS_KEY);
+    $('termsCheck').checked = agreed;
+    $('agreeBtn').disabled = !agreed;
+    $('agreeBtn').textContent = downloadAfterAgree ? 'Agree and download' : 'Agree';
+  }
+  if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
 }
-function closeModal(type) {
-  document.getElementById(type + 'Modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) {
-      overlay.classList.remove('open');
-      document.body.style.overflow = '';
-    }
-  });
+function closeDialog(d) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+
+document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDialog(b.dataset.open)));
+document.querySelectorAll('dialog').forEach((d) => {
+  d.querySelector('[data-close]').addEventListener('click', () => closeDialog(d));
+  d.addEventListener('click', (e) => { if (e.target === d) closeDialog(d); }); // click outside to close
 });
 
-// ── DOWNLOAD WITH TERMS ────────────────────────────────
-function showTerms(e) {
-  const agreed = localStorage.getItem('rexclick-terms-agreed');
-  if (!agreed) {
-    e.preventDefault();
-    openModal('terms');
-  }
-}
-function handleAgree() {
-  const checked = document.getElementById('termsCheck').checked;
-  if (checked) {
-    localStorage.setItem('rexclick-terms-agreed', '1');
-    closeModal('terms');
-    window.location.href = 'https://www.dropbox.com/scl/fi/usm3ic5uwmt4ba4xgpotf/RexClick-Setup-1.0.0.exe?rlkey=vzk7gc4vdnp8n69440b8nnuhl&st=d6tpvlzq&dl=1';
-  }
-}
-
-// ── ANIMATE MOCKUP KEYS ────────────────────────────────
-const litKeys = document.querySelectorAll('.mk');
-function randomFlash() {
-  litKeys.forEach(k => k.classList.remove('lit'));
-  const count = 2 + Math.floor(Math.random() * 3);
-  for (let i = 0; i < count; i++) {
-    const k = litKeys[Math.floor(Math.random() * litKeys.length)];
-    k.classList.add('lit');
-  }
-}
-setInterval(randomFlash, 800);
+dlBtn.addEventListener('click', (e) => {
+  if (store.get(TERMS_KEY)) return; // already agreed: download straight away
+  e.preventDefault();
+  openDialog('termsDlg', true);
+});
+$('termsCheck').addEventListener('change', (e) => { $('agreeBtn').disabled = !e.target.checked; });
+$('agreeBtn').addEventListener('click', () => {
+  store.set(TERMS_KEY, '1');
+  closeDialog(termsDlg);
+  if (downloadAfterAgree) window.location.href = dlBtn.href;
+});
 </script>
 </body>
 </html>
