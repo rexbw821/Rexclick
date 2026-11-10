@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RexClick: mechanical keyboard sounds for any keyboard</title>
 <meta name="description" content="RexClick plays a real mechanical switch sound every time you press a key, in any app on your PC. 34 sound packs, free for Windows.">
 <meta property="og:title" content="RexClick">
@@ -285,7 +285,18 @@ p { margin: 0; }
 /* Footer */
 footer { border-top: 1px solid var(--line); }
 .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 14px; color: var(--ink-2); }
-.foot nav { display: flex; gap: 20px; }
+.foot nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.foot nav a { color: var(--accent-text); text-underline-offset: 3px; }
+.foot-made { flex-basis: 100%; margin: 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-2); }
+.foot-made a { color: var(--accent-text); font-weight: 600; text-underline-offset: 3px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .foot { flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 28px 0 calc(32px + env(safe-area-inset-bottom, 0px)); }
+  .foot nav { flex-direction: column; align-items: stretch; gap: 0; width: 100%; max-width: 260px; margin: 8px 0; }
+  .foot nav .link-btn, .foot nav a { display: flex; align-items: center; justify-content: center; min-height: 48px; font-size: 15px; border-top: 1px solid var(--line); }
+  .foot nav > :first-child { border-top: 0; }
+  .foot-made { order: 3; border-top: 0; padding-top: 0; }
+  .foot > span:last-child { order: 4; }
+}
 
 /* ═════════════════════════════════════════════════════════════════════
    DIALOGS
@@ -444,7 +455,7 @@ dialog::backdrop { background: rgba(10, 12, 16, 0.55); }
           <p class="dl-meta">Version 1.1.0 for Windows 10 and 11. 112 MB. Free.</p>
           <div class="dl-actions">
             <!-- ▼ Your installer link. Change this one href when you upload a new version. -->
-            <a class="cap-btn" id="dlBtn" href="https://www.dropbox.com/scl/fi/khgfqk5268t99mtvg4sqh/RexClick-Setup-1.1.0.exe?rlkey=pqm4k52dpr0u8lmh9taryp4f0&st=klpdc3a9&dl=1">
+            <a class="cap-btn" id="dlBtn" href="https://www.dropbox.com/scl/fi/usm3ic5uwmt4ba4xgpotf/RexClick-Setup-1.0.0.exe?rlkey=vzk7gc4vdnp8n69440b8nnuhl&st=d6tpvlzq&dl=1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg>
               Download for Windows
             </a>
@@ -466,8 +477,11 @@ dialog::backdrop { background: rgba(10, 12, 16, 0.55); }
     <nav aria-label="Legal">
       <button class="link-btn" type="button" data-open="termsDlg">Terms</button>
       <button class="link-btn" type="button" data-open="privacyDlg">Privacy</button>
+      <a href="mailto:rexbw821@gmail.com">Contact</a>
+      <a href="https://rexbw821.com" target="_blank" rel="noopener">Website</a>
     </nav>
     <span>© 2026 RexClick</span>
+    <p class="foot-made">Made by Amoah Richard, Ghana · <a href="https://rexbw821.com" target="_blank" rel="noopener">rexbw821.com</a></p>
   </div>
 </footer>
 
@@ -655,36 +669,12 @@ function expand(pattern) {
   return out;
 }
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
-// The three packs are bundled in sounds/demo-sounds.js (loaded below), so they
-// work on a web server and when index.html is opened straight from disk.
-let bundleReady = null;
-function loadBundle() {
-  if (!bundleReady) {
-    bundleReady = new Promise((resolve, reject) => {
-      if (window.REXCLICK_DEMO_SOUNDS) return resolve(window.REXCLICK_DEMO_SOUNDS);
-      const tag = document.createElement('script');
-      tag.src = 'sounds/demo-sounds.js';
-      tag.onload = () => window.REXCLICK_DEMO_SOUNDS ? resolve(window.REXCLICK_DEMO_SOUNDS) : reject(new Error('sound bundle is empty'));
-      tag.onerror = () => reject(new Error('could not load sounds/demo-sounds.js'));
-      document.head.appendChild(tag);
-    });
-  }
-  return bundleReady;
-}
+const fileUrl = (id, f) => `sounds/${id}/${f.split('/').map(encodeURIComponent).join('/')}`;
 
-function base64ToArrayBuffer(b64) {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-function decode(pack, file) {
-  const b64 = pack.files[file];
-  if (!b64) return Promise.reject(new Error(`missing file ${file}`));
-  const data = base64ToArrayBuffer(b64);
-  // Older Safari only supports the callback form of decodeAudioData.
-  return new Promise((resolve, reject) => getCtx().decodeAudioData(data, resolve, reject));
+async function decode(id, file) {
+  const r = await fetch(fileUrl(id, file));
+  if (!r.ok) throw new Error(`${file}: ${r.status}`);
+  return await getCtx().decodeAudioData(await r.arrayBuffer());
 }
 
 const packs = {};      // id -> loaded pack (null if it failed)
@@ -692,11 +682,7 @@ const loading = {};    // id -> Promise of the loaded pack
 function loadPack(id) {
   if (!loading[id]) {
     loading[id] = (async () => {
-      const bundle = await loadBundle();
-      const src = bundle[id];
-      if (!src) throw new Error('not in the sound bundle');
-      if (!getCtx()) throw new Error('Web Audio not supported');
-      const config = src.config;
+      const config = await (await fetch(fileUrl(id, 'config.json'))).json();
       const defines = config.defines || {};
       if (config.key_define_type === 'multi') {
         // One file per sound: random "generic" presses, separate release sounds,
@@ -705,11 +691,11 @@ function loadPack(id) {
         const genericUp = expand(config.soundup);
         const files = [...new Set([...generic, ...genericUp, ...Object.values(defines).filter((v) => typeof v === 'string')])];
         const buffers = {};
-        await Promise.all(files.map(async (f) => { try { buffers[f] = await decode(src, f); } catch (e) { console.warn(`[${id}] ${f}`, e && e.message); } }));
+        await Promise.all(files.map(async (f) => { try { buffers[f] = await decode(id, f); } catch (e) { console.warn(e.message); } }));
         return (packs[id] = { multi: true, defines, buffers, generic: generic.filter((f) => buffers[f]), genericUp: genericUp.filter((f) => buffers[f]) });
       }
       // One long recording, cut into a slice per key: [start ms, length ms].
-      const buffer = await decode(src, config.sound);
+      const buffer = await decode(id, config.sound);
       return (packs[id] = { multi: false, defines, buffer, keys: Object.keys(defines).filter((k) => !k.includes('-up') && defines[k]) });
     })().catch((e) => { console.warn(`[${id}]`, e.message); packs[id] = null; return null; });
   }
@@ -738,7 +724,7 @@ function playPack(pack, kc, isUp) {
   if (Array.isArray(slice)) playBuffer(pack.buffer, slice[0] / 1000, Math.max(0.01, slice[1] / 1000));
 }
 
-// If a pack can't load (very old browser, or demo-sounds.js missing from the upload),
+// If a pack can't load (for example when the page is opened straight from disk),
 // fall back to a simple synthesised click so the demo still makes a sound.
 function synthClick() {
   const a = audio(); if (!a) return;
@@ -799,7 +785,7 @@ document.querySelectorAll('input[name="sw"]').forEach((r) => r.addEventListener(
   loadPack(r.value).then(() => { sound('KeyA', false); setTimeout(() => sound('KeyA', true), 95); });
 }));
 
-// Load all three packs in the background once the page is ready (about 500 KB in total).
+// Load all three packs in the background once the page is ready (about 450 KB in total).
 window.addEventListener('load', () => { if (getCtx()) DEMO_PACKS.forEach(loadPack); });
 
 // One quiet typing demo on load (lights only; browsers block sound until you interact).
